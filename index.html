@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boostly Marketing — Central de Demandas</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f0f; --surface: #181818; --surface2: #222; --border: #2a2a2a; --border2: #333;
+    --text: #e8e5de; --muted: #888; --faint: #444;
+    --accent: #c8f055; --accent2: #f0a830; --accent3: #55c8f0; --accent4: #f05580;
+    --font-head: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif; --font-mono: 'IBM Plex Mono', monospace;
+    --radius: 6px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+  /* LAYOUT */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 240px; min-width: 240px; background: var(--surface); border-right: 1px solid var(--border);
+    padding: 24px 0; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .sidebar-logo .tag { font-family: var(--font-mono); font-size: 10px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+  .sidebar-logo h1 { font-family: var(--font-head); font-size: 18px; font-weight: 800; }
+  .sidebar-section-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--faint); padding: 0 20px; margin: 12px 0 6px; }
+  .sidebar-item { display: flex; align-items: center; gap: 8px; padding: 7px 20px; cursor: pointer; color: var(--muted); font-size: 13px; transition: all .15s; border-left: 2px solid transparent; }
+  .sidebar-item:hover { color: var(--text); background: var(--surface2); }
+  .sidebar-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(200,240,85,.05); }
+  .sidebar-item .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .sidebar-bottom { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border); }
+  .user-chip { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 700; font-size: 12px; color: #0f0f0f; flex-shrink: 0; }
+  .user-info .name { font-size: 13px; font-weight: 500; }
+  .user-info .role { font-size: 11px; color: var(--muted); }
+  .main { flex: 1; overflow-x: hidden; }
+
+  /* TABS */
+  .tabs-bar { display: flex; align-items: center; gap: 2px; padding: 0 32px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 10; }
+  .tab { padding: 14px 16px; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* PAGE HEADER */
+  .page-header { padding: 32px 32px 24px; border-bottom: 1px solid var(--border); }
+  .page-header h2 { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .page-header p { color: var(--muted); font-size: 13px; }
+  .header-actions { display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
+
+  /* BUTTONS */
+  .btn { padding: 7px 14px; border-radius: var(--radius); font-size: 12px; font-family: var(--font-body); cursor: pointer; border: 1px solid transparent; transition: all .15s; font-weight: 500; }
+  .btn-primary { background: var(--accent); color: #0f0f0f; border-color: var(--accent); }
+  .btn-primary:hover { background: #b5d94d; }
+  .btn-ghost { background: transparent; color: var(--muted); border-color: var(--border2); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--faint); }
+
+  /* FILTERS */
+  .filters { padding: 16px 32px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+  .filter-chip { padding: 4px 12px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border2); color: var(--muted); cursor: pointer; transition: all .15s; }
+  .filter-chip:hover { border-color: var(--faint); color: var(--text); }
+  .filter-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(200,240,85,.07); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 10px 16px; text-align: left; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--faint); border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface); position: sticky; top: 49px; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; cursor: pointer; }
+  tbody tr:hover { background: var(--surface); }
+  tbody td { padding: 12px 16px; font-size: 13px; vertical-align: middle; }
+  .task-name { font-weight: 500; max-width: 260px; }
+  .task-name small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; margin-top: 2px; }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 4px; font-size: 11px; font-family: var(--font-mono); font-weight: 500; white-space: nowrap; }
+  .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .s-todo    { background: rgba(136,136,136,.12); color: #888; }
+  .s-doing   { background: rgba(240,168,48,.12);  color: var(--accent2); }
+  .s-review  { background: rgba(85,200,240,.12);  color: var(--accent3); }
+  .s-done    { background: rgba(200,240,85,.12);   color: var(--accent); }
+  .s-urgent  { background: rgba(240,85,128,.12);   color: var(--accent4); }
+  .type-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 11px; border: 1px solid var(--border2); color: var(--muted); white-space: nowrap; }
+  .client-cell { display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .client-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .assignee-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 4px; background: var(--surface2); font-size: 11px; white-space: nowrap; }
+  .assignee-av { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+  .deadline { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .deadline.urgent { color: var(--accent4); }
+  .deadline.soon { color: var(--accent2); }
+
+  /* SECTIONS */
+  .section { display: none; padding: 32px; }
+  .section.active { display: block; }
+
+  /* KANBAN */
+  .kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kanban-col { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .kanban-col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .kanban-col-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .kanban-count { width: 20px; height: 20px; border-radius: 4px; background: var(--surface2); font-family: var(--font-mono); font-size: 11px; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+  .kanban-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 8px; cursor: pointer; transition: border-color .15s; }
+  .kanban-card:hover { border-color: var(--faint); }
+  .kanban-card-title { font-size: 12px; font-weight: 500; margin-bottom: 8px; line-height: 1.4; }
+  .kanban-card-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+  /* CLIENTS */
+  .clients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .client-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; cursor: pointer; transition: border-color .15s; }
+  .client-card:hover { border-color: var(--faint); }
+  .client-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .client-avatar { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; font-size: 14px; }
+  .client-name { font-family: var(--font-head); font-size: 15px; font-weight: 700; }
+  .client-handle { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+  .client-segment { font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+  .client-stats { display: flex; gap: 16px; }
+  .client-stat .num { font-family: var(--font-mono); font-size: 16px; font-weight: 500; }
+  .client-stat .lbl { font-size: 10px; color: var(--muted); }
+
+  /* CALENDAR */
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .cal-title { font-family: var(--font-head); font-size: 20px; font-weight: 700; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .cal-day-head { background: var(--surface); padding: 8px; text-align: center; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); }
+  .cal-day { background: var(--bg); min-height: 90px; padding: 8px; }
+  .cal-day.other-month .cal-day-num { color: var(--faint); }
+  .cal-day-num { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .cal-day.today .cal-day-num { background: var(--accent); color: #0f0f0f; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .cal-event { font-size: 10px; padding: 2px 5px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+
+  /* STATS */
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 24px; overflow: hidden; }
+  .stat-cell { background: var(--surface); padding: 16px 20px; }
+  .stat-cell .num { font-family: var(--font-head); font-size: 24px; font-weight: 800; }
+  .stat-cell .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* REVIEW */
+  .review-section { max-width: 640px; }
+  .review-day { margin-bottom: 20px; }
+  .review-day-header { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-size: 14px; font-weight: 700; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .day-badge { width: 28px; height: 28px; border-radius: 6px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; color: var(--accent); flex-shrink: 0; }
+  .review-task { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius); margin-bottom: 4px; }
+  .review-task:hover { background: var(--surface); }
+  .review-checkbox { width: 16px; height: 16px; border: 1.5px solid var(--border2); border-radius: 3px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+  .review-checkbox.checked { background: var(--accent); border-color: var(--accent); }
+  .review-checkbox.checked::after { content: '✓'; font-size: 10px; color: #0f0f0f; font-weight: 700; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 28px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .modal-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; line-height: 1; padding: 0; }
+  .modal-close:hover { color: var(--text); }
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 11px; font-family: var(--font-mono); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .form-input, .form-select, .form-textarea { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--text); padding: 8px 12px; font-family: var(--font-body); font-size: 13px; outline: none; transition: border-color .15s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { min-height: 80px; resize: vertical; }
+  .form-select option { background: var(--surface2); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* LOADING */
+  .loading { display: flex; align-items: center; justify-content: center; padding: 60px; gap: 12px; color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 12px 18px; font-size: 13px; z-index: 200; display: none; align-items: center; gap: 10px; }
+  .toast.show { display: flex; }
+  .toast.ok { border-left: 3px solid var(--accent); }
+  .toast.err { border-left: 3px solid var(--accent4); }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .kanban { grid-template-columns: repeat(2, 1fr); }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .clients-grid { grid-template-columns: 1fr; }
+    .section { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="tag">Agência</div>
+    <h1>Boostly Marketing</h1>
+  </div>
+  <div class="sidebar-section-title">Menu</div>
+  <div class="sidebar-item active" onclick="showTab('demandas')"><span>📋</span> Central de Demandas</div>
+  <div class="sidebar-item" onclick="showTab('kanban')"><span>🗂</span> Kanban</div>
+  <div class="sidebar-item" onclick="showTab('clientes')"><span>👥</span> Clientes</div>
+  <div class="sidebar-item" onclick="showTab('calendario')"><span>📅</span> Calendário</div>
+  <div class="sidebar-item" onclick="showTab('semana')"><span>✅</span> Revisão Semanal</div>
+  <div class="sidebar-section-title" style="margin-top:16px">Clientes</div>
+  <div class="sidebar-item" onclick="filterClient('bcar')"><span class="dot" style="background:#c8f055"></span> @bcar.auto</div>
+  <div class="sidebar-item" onclick="filterClient('hangar')"><span class="dot" style="background:#f0a830"></span> @hangarmotors</div>
+  <div class="sidebar-item" onclick="filterClient('bloise')"><span class="dot" style="background:#55c8f0"></span> @bloisemotors</div>
+  <div class="sidebar-item" onclick="filterClient('artt')"><span class="dot" style="background:#f05580"></span> @arttintorlando</div>
+  <div class="sidebar-item" onclick="filterClient('david')"><span class="dot" style="background:#a78bfa"></span> @davidconsultingbr</div>
+  <div class="sidebar-item" onclick="filterClient('ivan')"><span class="dot" style="background:#34d399"></span> @ivanilsonthurler</div>
+  <div class="sidebar-item" onclick="filterClient('viva')"><span class="dot" style="background:#fb923c"></span> @vivaltta</div>
+  <div class="sidebar-item" onclick="filterClient('bethel')"><span class="dot" style="background:#e879f9"></span> @bethelassembly</div>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">I</div>
+      <div class="user-info"><div class="name">Ianes</div><div class="role">Gestor · Dono</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="tabs-bar">
+    <div class="tab active" onclick="showTab('demandas')">Central de Demandas</div>
+    <div class="tab" onclick="showTab('kanban')">Kanban</div>
+    <div class="tab" onclick="showTab('clientes')">Clientes</div>
+    <div class="tab" onclick="showTab('calendario')">Calendário</div>
+    <div class="tab" onclick="showTab('semana')">Revisão Semanal</div>
+  </div>
+
+  <!-- DEMANDAS -->
+  <div id="sec-demandas" class="section active">
+    <div class="page-header">
+      <h2>Central de Demandas</h2>
+      <p>Todas as tarefas da agência, sincronizadas com o Notion.</p>
+      <div class="header-actions">
+        <button class="btn btn-primary" onclick="openModal()">+ Nova demanda</button>
+        <button class="btn btn-ghost" onclick="loadDemands()">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-chip active" onclick="filterStatus('all',this)">Todas</div>
+      <div class="filter-chip" onclick="filterStatus('todo',this)">A fazer</div>
+      <div class="filter-chip" onclick="filterStatus('doing',this)">Em andamento</div>
+      <div class="filter-chip" onclick="filterStatus('review',this)">Revisão</div>
+      <div class="filter-chip" onclick="filterStatus('done',this)">Concluído</div>
+      <div class="filter-chip" onclick="filterStatus('urgent',this)">Urgente</div>
+    </div>
+    <div class="table-wrap">
+      <div id="table-loading" class="loading"><div class="spinner"></div> Carregando demandas do Notion...</div>
+      <table id="demand-table" style="display:none">
+        <thead><tr><th>P</th><th>Tarefa</th><th>Cliente</th><th>Tipo</th><th>Status</th><th>Responsável</th><th>Prazo</th></tr></thead>
+        <tbody id="demand-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- KANBAN -->
+  <div id="sec-kanban" class="section">
+    <div class="page-header"><h2>Kanban</h2><p>Visão por status de todas as demandas.</p></div>
+    <div class="kanban" id="kanban-board"></div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div id="sec-clientes" class="section">
+    <div class="page-header"><h2>Base de Clientes</h2><p>Métricas e informações de cada cliente.</p></div>
+    <div class="clients-grid" id="clients-grid"></div>
+  </div>
+
+  <!-- CALENDÁRIO -->
+  <div id="sec-calendario" class="section">
+    <div class="page-header"><h2>Calendário Editorial</h2><p>Entregas e posts planejados por data.</p></div>
+    <div class="cal-header">
+      <button class="btn btn-ghost" onclick="changeMonth(-1)">← Anterior</button>
+      <div class="cal-title" id="cal-month-title"></div>
+      <button class="btn btn-ghost" onclick="changeMonth(1)">Próximo →</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <!-- REVISÃO SEMANAL -->
+  <div id="sec-semana" class="section">
+    <div class="page-header"><h2>Revisão Semanal</h2><p>15 minutos toda segunda-feira para organizar a semana.</p></div>
+    <div class="stats-bar">
+      <div class="stat-cell"><div class="num" id="st-done" style="color:var(--accent)">0</div><div class="lbl">Concluídas</div></div>
+      <div class="stat-cell"><div class="num" id="st-doing" style="color:var(--accent2)">0</div><div class="lbl">Em andamento</div></div>
+      <div class="stat-cell"><div class="num" id="st-urgent" style="color:var(--accent4)">0</div><div class="lbl">Urgentes</div></div>
+      <div class="stat-cell"><div class="num" id="st-total">0</div><div class="lbl">Total</div></div>
+    </div>
+    <div class="review-section" id="review-section"></div>
+  </div>
+</main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Nova Demanda</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <input type="hidden" id="f-id">
+    <div class="form-group">
+      <label class="form-label">Título da tarefa</label>
+      <input class="form-input" id="f-title" placeholder="Ex: Criar reels para junho">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <select class="form-select" id="f-client">
+          <option value="@bcar.auto">@bcar.auto</option>
+          <option value="@hangarmotors">@hangarmotors</option>
+          <option value="@bloisemotors">@bloisemotors</option>
+          <option value="@arttintorlando">@arttintorlando</option>
+          <option value="@davidconsultingbr">@davidconsultingbr</option>
+          <option value="@ivanilsonthurler">@ivanilsonthurler</option>
+          <option value="@vivaltta">@vivaltta</option>
+          <option value="@bethelassembly">@bethelassembly</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" id="f-type">
+          <option>Post feed</option><option>Reels / Vídeo</option><option>Stories</option>
+          <option>Tráfego pago</option><option>Relatório</option><option>Copy / Texto</option>
+          <option>Identidade visual</option><option>Reunião / Call</option><option>Outro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Responsável</label>
+        <select class="form-select" id="f-assignee">
+          <option value="Ianes">Ianes</option>
+          <option value="Vitória">Vitória</option>
+          <option value="Funcionária 2">Funcionária 2</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioridade</label>
+        <select class="form-select" id="f-priority">
+          <option value="🔴">🔴 Alta</option>
+          <option value="🟡" selected>🟡 Média</option>
+          <option value="🟢">🟢 Baixa</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prazo</label>
+        <input class="form-input" id="f-deadline" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="f-status">
+          <option value="todo">A fazer</option>
+          <option value="doing">Em andamento</option>
+          <option value="review">Revisão</option>
+          <option value="done">Concluído</option>
+          <option value="urgent">Urgente</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observações</label>
+      <textarea class="form-textarea" id="f-notes" placeholder="Detalhes, links, referências..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveDemand()">Salvar demanda</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const CLIENTS = {
+  '@bcar.auto':         { key:'bcar',   color:'#c8f055', segment:'Automotivo — carros' },
+  '@hangarmotors':      { key:'hangar', color:'#f0a830', segment:'Automotivo — carros' },
+  '@bloisemotors':      { key:'bloise', color:'#55c8f0', segment:'Motos' },
+  '@arttintorlando':    { key:'artt',   color:'#f05580', segment:'Insufilm' },
+  '@davidconsultingbr': { key:'david',  color:'#a78bfa', segment:'Vendedor de carros' },
+  '@ivanilsonthurler':  { key:'ivan',   color:'#34d399', segment:'Importação' },
+  '@vivaltta':          { key:'viva',   color:'#fb923c', segment:'Construção e molduras' },
+  '@bethelassembly':    { key:'bethel', color:'#e879f9', segment:'Igreja' },
+};
+const ASSIGNEES = {
+  'Ianes':         { color:'#c8f055', bg:'rgba(200,240,85,.15)' },
+  'Vitória':       { color:'#55c8f0', bg:'rgba(85,200,240,.15)' },
+  'Funcionária 2': { color:'#f05580', bg:'rgba(240,85,128,.15)' },
+};
+const STATUS = {
+  todo:   { label:'A fazer',       cls:'s-todo' },
+  doing:  { label:'Em andamento',  cls:'s-doing' },
+  review: { label:'Revisão',       cls:'s-review' },
+  done:   { label:'Concluído',     cls:'s-done' },
+  urgent: { label:'Urgente',       cls:'s-urgent' },
+};
+
+let demands = [];
+let currentFilter = 'all';
+let currentClientFilter = null;
+let calDate = new Date();
+calDate.setDate(1);
+let editingId = null;
+
+function clientColor(name) {
+  return (CLIENTS[name] || {}).color || '#888';
+}
+function getAssignee(name) {
+  return ASSIGNEES[name] || { color:'#888', bg:'rgba(136,136,136,.15)' };
+}
+function getStatus(s) {
+  return STATUS[s] || STATUS['todo'];
+}
+
+// ---- API ----
+async function loadDemands() {
+  document.getElementById('table-loading').style.display = 'flex';
+  document.getElementById('demand-table').style.display = 'none';
+  try {
+    const r = await fetch('/api/demands');
+    demands = await r.json();
+    renderTable();
+    if (document.getElementById('sec-kanban').classList.contains('active')) renderKanban();
+    if (document.getElementById('sec-clientes').classList.contains('active')) renderClients();
+    if (document.getElementById('sec-calendario').classList.contains('active')) renderCalendar();
+    if (document.getElementById('sec-semana').classList.contains('active')) renderReview();
+  } catch(e) {
+    showToast('Erro ao carregar demandas: ' + e.message, 'err');
+  }
+  document.getElementById('table-loading').style.display = 'none';
+  document.getElementById('demand-table').style.display = 'table';
+}
+
+async function createDemand(d) {
+  const r = await fetch('/api/demands', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(d) });
+  return r.json();
+}
+
+async function updateDemand(d) {
+  const r = await fetch('/api/demands', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(d) });
+  return r.json();
+}
+
+// ---- TABS ----
+function showTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab, .sidebar-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-' + tab).classList.add('active');
+  if (tab === 'kanban') renderKanban();
+  if (tab === 'clientes') renderClients();
+  if (tab === 'calendario') renderCalendar();
+  if (tab === 'semana') renderReview();
+}
+
+// ---- TABLE ----
+function renderTable() {
+  const tbody = document.getElementById('demand-body');
+  let data = [...demands];
+  if (currentFilter !== 'all') data = data.filter(d => d.status === currentFilter);
+  if (currentClientFilter) data = data.filter(d => (CLIENTS[d.client] || {}).key === currentClientFilter);
+  tbody.innerHTML = data.map(d => {
+    const cl = CLIENTS[d.client] || { color:'#888' };
+    const as = getAssignee(d.assignee);
+    const st = getStatus(d.status);
+    const dl = d.deadline ? formatDeadline(d.deadline) : '—';
+    const dlCls = d.status !== 'done' ? getDeadlineClass(d.deadline) : '';
+    return `<tr onclick="openEditModal('${d.id}')">
+      <td>${d.priority||'🟡'}</td>
+      <td><div class="task-name">${d.title}<small>${d.type}</small></div></td>
+      <td><div class="client-cell"><span class="client-dot" style="background:${cl.color}"></span>${d.client}</div></td>
+      <td><span class="type-badge">${d.type}</span></td>
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td><span class="assignee-chip"><span class="assignee-av" style="background:${as.bg};color:${as.color}">${(d.assignee||'?')[0]}</span>${d.assignee||'—'}</span></td>
+      <td><span class="deadline ${dlCls}">${dl}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px">Nenhuma demanda encontrada</td></tr>';
+}
+
+function formatDeadline(s) {
+  const d = new Date(s + 'T12:00:00');
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short' });
+}
+function getDeadlineClass(s) {
+  if (!s) return '';
+  const diff = (new Date(s + 'T12:00:00') - new Date()) / 86400000;
+  if (diff < 1) return 'urgent';
+  if (diff < 3) return 'soon';
+  return '';
+}
+
+function filterStatus(s, el) {
+  currentFilter = s;
+  currentClientFilter = null;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+function filterClient(k) {
+  currentClientFilter = k;
+  currentFilter = 'all';
+  showTab('demandas');
+  document.querySelectorAll('.filter-chip')[0].classList.add('active');
+  renderTable();
+}
+
+// ---- MODAL ----
+function openModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Nova Demanda';
+  document.getElementById('save-btn').textContent = 'Salvar demanda';
+  document.getElementById('f-id').value = '';
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-client').value = '@bcar.auto';
+  document.getElementById('f-type').value = 'Post feed';
+  document.getElementById('f-assignee').value = 'Ianes';
+  document.getElementById('f-priority').value = '🟡';
+  document.getElementById('f-deadline').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f-status').value = 'todo';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function openEditModal(id) {
+  const d = demands.find(x => x.id === id);
+  if (!d) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Editar Demanda';
+  document.getElementById('save-btn').textContent = 'Atualizar demanda';
+  document.getElementById('f-id').value = id;
+  document.getElementById('f-title').value = d.title;
+  document.getElementById('f-client').value = d.client;
+  document.getElementById('f-type').value = d.type;
+  document.getElementById('f-assignee').value = d.assignee;
+  document.getElementById('f-priority').value = d.priority || '🟡';
+  document.getElementById('f-deadline').value = d.deadline || '';
+  document.getElementById('f-status').value = d.status;
+  document.getElementById('f-notes').value = d.notes || '';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalOutside(e) { if (e.target.id === 'modal-overlay') closeModal(); }
+
+async function saveDemand() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const d = {
+    title:    document.getElementById('f-title').value || 'Sem título',
+    client:   document.getElementById('f-client').value,
+    type:     document.getElementById('f-type').value,
+    assignee: document.getElementById('f-assignee').value,
+    priority: document.getElementById('f-priority').value,
+    deadline: document.getElementById('f-deadline').value,
+    status:   document.getElementById('f-status').value,
+    notes:    document.getElementById('f-notes').value,
+  };
+  try {
+    if (editingId) {
+      await updateDemand({ id: editingId, ...d });
+      showToast('Demanda atualizada no Notion ✓', 'ok');
+    } else {
+      await createDemand(d);
+      showToast('Demanda criada no Notion ✓', 'ok');
+    }
+    closeModal();
+    await loadDemands();
+  } catch(e) {
+    showToast('Erro ao salvar: ' + e.message, 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = editingId ? 'Atualizar demanda' : 'Salvar demanda';
+}
+
+// ---- KANBAN ----
+function renderKanban() {
+  const cols = ['todo','doing','review','done'];
+  document.getElementById('kanban-board').innerHTML = cols.map(s => {
+    const items = demands.filter(d => d.status === s);
+    const st = getStatus(s);
+    return `<div class="kanban-col">
+      <div class="kanban-col-header"><span class="kanban-col-title">${st.label}</span><span class="kanban-count">${items.length}</span></div>
+      ${items.map(d => {
+        const cl = CLIENTS[d.client] || { color:'#888' };
+        const as = getAssignee(d.assignee);
+        return `<div class="kanban-card" onclick="openEditModal('${d.id}')">
+          <div class="kanban-card-title">${d.priority||'🟡'} ${d.title}</div>
+          <div class="kanban-card-meta">
+            <span class="client-cell" style="font-size:11px"><span class="client-dot" style="background:${cl.color}"></span>${d.client}</span>
+            <span class="assignee-chip" style="font-size:10px"><span class="assignee-av" style="background:${as.bg};color:${as.color};width:14px;height:14px;font-size:8px">${(d.assignee||'?')[0]}</span>${d.assignee||'—'}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ---- CLIENTS ----
+function renderClients() {
+  document.getElementById('clients-grid').innerHTML = Object.entries(CLIENTS).map(([name, cl]) => {
+    const total   = demands.filter(d => d.client === name).length;
+    const done    = demands.filter(d => d.client === name && d.status === 'done').length;
+    const pending = total - done;
+    return `<div class="client-card" onclick="filterClient('${cl.key}')">
+      <div class="client-card-header">
+        <div class="client-avatar" style="background:${cl.color}22;color:${cl.color}">${name[1].toUpperCase()}</div>
+        <div><div class="client-name">${name}</div><div class="client-handle">${cl.key}</div></div>
+      </div>
+      <div class="client-segment">${cl.segment}</div>
+      <div class="client-stats">
+        <div class="client-stat"><div class="num" style="color:${cl.color}">${total}</div><div class="lbl">Demandas</div></div>
+        <div class="client-stat"><div class="num" style="color:#c8f055">${done}</div><div class="lbl">Concluídas</div></div>
+        <div class="client-stat"><div class="num" style="color:#f0a830">${pending}</div><div class="lbl">Pendentes</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ---- CALENDAR ----
+function renderCalendar() {
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('cal-month-title').textContent = `${months[calDate.getMonth()]} ${calDate.getFullYear()}`;
+  const days = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  let html = days.map(d => `<div class="cal-day-head">${d}</div>`).join('');
+  const first = new Date(calDate.getFullYear(), calDate.getMonth(), 1).getDay();
+  const daysInMonth = new Date(calDate.getFullYear(), calDate.getMonth() + 1, 0).getDate();
+  const prevDays = new Date(calDate.getFullYear(), calDate.getMonth(), 0).getDate();
+  const today = new Date();
+  for (let i = 0; i < first; i++) html += `<div class="cal-day other-month"><div class="cal-day-num">${prevDays - first + 1 + i}</div></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = today.getDate()===d && today.getMonth()===calDate.getMonth() && today.getFullYear()===calDate.getFullYear();
+    const dayDemands = demands.filter(x => x.deadline === dateStr);
+    html += `<div class="cal-day ${isToday?'today':''}">
+      <div class="cal-day-num">${isToday ? `<span>${d}</span>` : d}</div>
+      ${dayDemands.map(x => { const cl = CLIENTS[x.client]||{color:'#888'}; return `<div class="cal-event" style="background:${cl.color}22;color:${cl.color}" title="${x.title}">${x.title.slice(0,16)}…</div>`; }).join('')}
+    </div>`;
+  }
+  for (let i = 1; i <= 42 - first - daysInMonth; i++) html += `<div class="cal-day other-month"><div class="cal-day-num">${i}</div></div>`;
+  document.getElementById('cal-grid').innerHTML = html;
+}
+function changeMonth(dir) { calDate = new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1); renderCalendar(); }
+
+// ---- REVIEW ----
+function renderReview() {
+  document.getElementById('st-done').textContent   = demands.filter(d => d.status==='done').length;
+  document.getElementById('st-doing').textContent  = demands.filter(d => d.status==='doing').length;
+  document.getElementById('st-urgent').textContent = demands.filter(d => d.status==='urgent').length;
+  document.getElementById('st-total').textContent  = demands.length;
+  const days = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira'];
+  const abbr = ['SEG','TER','QUA','QUI','SEX'];
+  const pending = demands.filter(d => d.status !== 'done');
+  document.getElementById('review-section').innerHTML = days.map((day, i) => {
+    const items = pending.filter((_,idx) => idx % 5 === i);
+    return `<div class="review-day">
+      <div class="review-day-header"><div class="day-badge">${abbr[i]}</div>${day}</div>
+      ${items.map(d => {
+        const cl = CLIENTS[d.client]||{color:'#888'};
+        const as = getAssignee(d.assignee);
+        const st = getStatus(d.status);
+        return `<div class="review-task">
+          <div class="review-checkbox ${d.status==='done'?'checked':''}" onclick="toggleDone('${d.id}', this)"></div>
+          <div style="flex:1;font-size:13px"><strong>${d.title}</strong><br>
+          <span style="font-size:11px;color:var(--muted)">
+            <span style="color:${cl.color}">${d.client}</span> ·
+            <span style="color:${as.color}">${d.assignee||'—'}</span> ·
+            <span class="badge ${st.cls}" style="font-size:10px;padding:1px 6px">${st.label}</span>
+          </span></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+async function toggleDone(id, el) {
+  const d = demands.find(x => x.id === id);
+  if (!d) return;
+  const newStatus = d.status === 'done' ? 'todo' : 'done';
+  el.classList.toggle('checked');
+  d.status = newStatus;
+  renderTable(); renderReview();
+  try {
+    await updateDemand({ id, status: newStatus });
+  } catch(e) {
+    showToast('Erro ao atualizar status', 'err');
+  }
+}
+
+// ---- TOAST ----
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// INIT
+loadDemands();
+</script>
+</body>
+</html>
