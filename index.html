@@ -417,7 +417,7 @@ async function loadDemands() {
   document.getElementById('table-loading').style.display = 'flex';
   document.getElementById('demand-table').style.display = 'none';
   try {
-    const r = await fetch('/api/demands');
+    const r = await fetch('https://boostly-api.marketingboostly.workers.dev/demands');
     demands = await r.json();
     renderTable();
     if (document.getElementById('sec-kanban').classList.contains('active')) renderKanban();
@@ -432,12 +432,12 @@ async function loadDemands() {
 }
 
 async function createDemand(d) {
-  const r = await fetch('/api/demands', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(d) });
+  const r = await fetch('https://boostly-api.marketingboostly.workers.dev/demands', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(d) });
   return r.json();
 }
 
 async function updateDemand(d) {
-  const r = await fetch('/api/demands', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(d) });
+  const r = await fetch('https://boostly-api.marketingboostly.workers.dev/demands', { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(d) });
   return r.json();
 }
 
